@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ProxyBrowser — Free Web Proxy</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0b18;
+    --surface: #13131f;
+    --surface2: #1c1c2e;
+    --border: rgba(255,255,255,0.08);
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-glow: rgba(124,58,237,0.3);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --green: #4ade80;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Background orbs */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+    top: -200px; left: -200px;
+  }
+  body::after {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    bottom: -150px; right: -150px;
+  }
+
+  /* Nav */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(11,11,24,0.8);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1.1rem; font-weight: 700; color: var(--purple-light);
+    text-decoration: none;
+  }
+  .nav-logo svg { width: 22px; height: 22px; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    font-size: 0.85rem; color: var(--muted2); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* Hero */
+  .hero {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    padding: 5rem 1.5rem 3rem;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 20px; padding: 4px 14px;
+    font-size: 0.75rem; color: var(--purple-light);
+    margin-bottom: 1.5rem;
+  }
+  .badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 30%, var(--purple-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: var(--muted2);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Search card */
+  .search-card {
+    width: 100%; max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: 0 0 60px rgba(124,58,237,0.1);
+    margin-bottom: 1.5rem;
+  }
+
+  .input-group {
+    display: flex; gap: 10px; margin-bottom: 1rem;
+  }
+
+  .url-wrapper {
+    flex: 1;
+    display: flex; align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 14px;
+    gap: 8px;
+    transition: border-color 0.2s;
+  }
+  .url-wrapper:focus-within { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-glow); }
+
+  .url-wrapper svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+
+  .url-wrapper input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-size: 0.95rem;
+    padding: 12px 0;
+  }
+  .url-wrapper input::placeholder { color: var(--muted); }
+
+  .btn-go {
+    background: var(--purple);
+    color: #fff; border: none; border-radius: 12px;
+    padding: 0 24px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-go:hover { background: #6d28d9; }
+  .btn-go:active { transform: scale(0.97); }
+
+  /* Options row */
+  .options {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+  }
+  .option {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; color: var(--muted2); cursor: pointer;
+    user-select: none;
+  }
+  .option input[type=checkbox] { accent-color: var(--purple); width: 14px; height: 14px; }
+
+  /* Quick links */
+  .quicklinks {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+  .quicklinks .ql-label { font-size: 0.8rem; color: var(--muted); }
+  .ql-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 0.8rem; color: var(--muted2);
+    cursor: pointer; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .ql-btn:hover { border-color: var(--purple-light); color: var(--purple-light); background: rgba(124,58,237,0.08); }
+
+  /* Features */
+  .features {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    margin: 2.5rem auto 0;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .feat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .feat:hover { border-color: rgba(124,58,237,0.4); }
+  .feat-icon { font-size: 1.4rem; margin-bottom: 10px; }
+  .feat-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .feat-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+  /* Footer */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted2); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 520px) {
+    .input-group { flex-direction: column; }
+    .btn-go { padding: 12px; }
+    nav { padding: 1rem; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/>
+    </svg>
+    ProxyBrowser
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="https://github.com" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="badge"><span></span> Free &amp; Open Proxy</div>
+    <h1>Browse the web<br/>privately &amp; freely</h1>
+    <p class="subtitle">Access any website through our fast proxy. No installs, no accounts. Just enter a URL and go.</p>
+
+    <div class="search-card">
+      <div class="input-group">
+        <div class="url-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/>
+          </svg>
+          <input type="text" id="urlInput" placeholder="Enter a website URL, e.g. google.com" autocomplete="off" spellcheck="false" />
+        </div>
+        <button class="btn-go" onclick="go()">Browse</button>
+      </div>
+      <div class="options">
+        <label class="option"><input type="checkbox" id="encodeUrl" checked /> Encode URL</label>
+        <label class="option"><input type="checkbox" id="removeScripts" /> Remove scripts</label>
+        <label class="option"><input type="checkbox" id="removeCookies" /> Remove cookies</label>
+      </div>
+    </div>
+
+    <div class="quicklinks">
+      <span class="ql-label">Quick access:</span>
+      <a class="ql-btn" href="#" onclick="visit('https://google.com')">Google</a>
+      <a class="ql-btn" href="#" onclick="visit('https://wikipedia.org')">Wikipedia</a>
+      <a class="ql-btn" href="#" onclick="visit('https://reddit.com')">Reddit</a>
+      <a class="ql-btn" href="#" onclick="visit('https://news.ycombinator.com')">Hacker News</a>
+      <a class="ql-btn" href="#" onclick="visit('https://bbc.com/news')">BBC News</a>
+      <a class="ql-btn" href="#" onclick="visit('https://github.com')">GitHub</a>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="feat">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-title">Private browsing</div>
+      <div class="feat-desc">Your real IP is hidden from sites you visit. Traffic goes through the proxy server.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">No installs</div>
+      <div class="feat-desc">Works entirely in your browser. No extensions, no apps, no setup required.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🌐</div>
+      <div class="feat-title">Full URL rewriting</div>
+      <div class="feat-desc">Links, images, CSS, and assets are all rewritten to stay inside the proxy.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🧭</div>
+      <div class="feat-title">Built-in toolbar</div>
+      <div class="feat-desc">Navigate freely with the persistent toolbar injected into every page.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🚫</div>
+      <div class="feat-title">Bypass blocks</div>
+      <div class="feat-desc">Access sites restricted by your network, school, or workplace.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">☁️</div>
+      <div class="feat-title">Serverless</div>
+      <div class="feat-desc">Powered by Vercel Edge Functions. Fast, globally distributed, always on.</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  &copy; 2025 ProxyBrowser &mdash; <a href="#">Privacy</a> &mdash; <a href="#">Terms</a>
+</footer>
+
+<script>
+  function go() {
+    var val = document.getElementById("urlInput").value.trim();
+    if (!val) return;
+    if (!/^https?:\/\//.test(val)) val = "https://" + val;
+    window.location.href = "/api/proxy?url=" + encodeURIComponent(val);
+  }
+
+  function visit(u) {
+    window.location.href = "/api/proxy?url=" + encodeURIComponent(u);
+  }
+
+  document.getElementById("urlInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") go();
+  });
+</script>
+</body>
+</html>
